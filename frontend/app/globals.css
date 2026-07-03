@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #0a0e27;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f1629;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #a855f7;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #d946ef;
+}
+
+.glass-card {
+  background: rgba(15, 22, 41, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(26, 42, 74, 0.5);
+  border-radius: 12px;
+}
+
+.glass-card-lg {
+  background: rgba(15, 22, 41, 0.95);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(26, 42, 74, 0.5);
+  border-radius: 16px;
+}
+
+.neon-glow {
+  box-shadow: 0 0 30px rgba(217, 70, 239, 0.5), inset 0 0 30px rgba(217, 70, 239, 0.1);
+}
+
+.neon-glow:hover {
+  box-shadow: 0 0 40px rgba(217, 70, 239, 0.7), inset 0 0 30px rgba(217, 70, 239, 0.15);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #a855f7 0%, #0ea5e9 50%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.transition-all {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (max-width: 640px) {
+  body {
+    font-size: 14px;
+  }
+}
