@@ -1,13 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Copy, Check } from 'lucide-react'
 import { toast } from 'sonner'
+import { api } from '@/lib/api'
+import type { BioResponse } from '@/types/api'
 
-const bios = [
+const FALLBACK_BIOS: BioResponse[] = [
   { id: 1, text: '★ 𝐊𝐢𝐥𝐥𝐞𝐫 ★ | FF Player | 💀', category: 'Gaming' },
   { id: 2, text: '🎮 Pro Gamer 🎮 | Always Online | 🔥', category: 'Gaming' },
   { id: 3, text: '✨ Aesthetic Bio ✨ | Dreamer | 💫', category: 'Aesthetic' },
@@ -22,11 +24,23 @@ const bios = [
   { id: 12, text: '🌊 Ocean Breeze 🌊 | Chill Mode | 🏖️', category: 'Aesthetic' },
 ]
 
-const categories = ['All', ...Array.from(new Set(bios.map(b => b.category)))]
-
 export function BioLibrary() {
+  const [bios, setBios] = useState<BioResponse[]>(FALLBACK_BIOS)
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [copiedId, setCopiedId] = useState<number | null>(null)
+
+  useEffect(() => {
+    api.bio
+      .getLibrary()
+      .then(({ data }) => {
+        if (Array.isArray(data) && data.length > 0) setBios(data)
+      })
+      .catch(() => {
+        // Keep the fallback list if the backend is unreachable.
+      })
+  }, [])
+
+  const categories = ['All', ...Array.from(new Set(bios.map(b => b.category)))]
 
   const filteredBios = selectedCategory === 'All'
     ? bios

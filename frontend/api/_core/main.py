@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from app.routes import token, bio
+from _core.routes import token, bio
 import logging
 
 logging.basicConfig(
@@ -25,6 +25,7 @@ app.add_middleware(
 )
 
 @app.get("/health")
+@app.get("/api/health")
 async def health_check():
     return {"status": "ok", "service": "FF Token Tool API"}
 

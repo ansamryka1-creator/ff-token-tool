@@ -23,17 +23,39 @@ A professional and modern web platform for Free Fire players with specialized to
 - FastAPI (Python)
 - Uvicorn
 - Python 3.9+
+- Deployed as Vercel Python serverless functions (`frontend/api/`)
 
 ## 📦 Project Structure
 
+The FastAPI backend lives inside the Next.js project as Vercel Python
+serverless functions, so the whole app deploys as a **single Vercel project**
+(one domain, no CORS).
+
 ```
 ff-token-tool/
-├── frontend/                 # Next.js application
-├── backend/                  # FastAPI application
-└── docker-compose.yml        # Docker configuration
+├── frontend/                 # Next.js application (Vercel project root)
+│   ├── api/                  # FastAPI backend (Vercel Python functions)
+│   │   ├── index.py          # Serverless entrypoint (exposes `app`)
+│   │   ├── requirements.txt  # Python dependencies
+│   │   └── _core/            # FastAPI app, routes and services
+│   └── vercel.json           # Routes /api/* to the Python function
+└── docker-compose.yml        # Local/VPS Docker configuration
 ```
 
-## 🚀 Getting Started
+## 🚀 Getting Started (local)
+
+Run the backend and frontend in two terminals. The Next.js dev server
+automatically proxies `/api/*` to the backend on port 8000.
+
+### Backend
+
+```bash
+cd frontend/api
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+uvicorn index:app --reload --port 8000
+```
 
 ### Frontend
 
@@ -43,21 +65,15 @@ npm install
 npm run dev
 ```
 
-### Backend
-
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
+Open http://localhost:3000 — the tools call the API on the same origin.
 
 ## 📝 API Endpoints
 
-- `POST /api/token` - Generate JWT/EAT tokens
-- `POST /api/longbio` - Process bio content
-- `GET /api/bios` - Get bio library
+- `POST /api/token` — extract a JWT from an Access Token
+- `POST /api/eat-to-access` — convert an EAT token/URL to an Access Token
+- `POST /api/guest-token` — get an Access Token from a guest account (UID + password)
+- `POST /api/update-bio` — update the account bio using a JWT
+- `GET /api/library` — get the bio library
 
 ## 📖 Documentation
 

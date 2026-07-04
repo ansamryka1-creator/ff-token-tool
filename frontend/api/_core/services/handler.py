@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 # استيراد دوال الخدمة
 try:
-    from app.services import token_service
+    from _core.services import token_service
 except ImportError:
     logger.error("Failed to import token_service")
     token_service = None

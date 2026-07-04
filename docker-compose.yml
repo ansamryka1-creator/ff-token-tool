@@ -8,7 +8,9 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://backend:8000
+      # The Next.js server proxies /api/* to the backend over the Docker network
+      # (see frontend/next.config.js). The browser only ever talks to same-origin /api.
+      - API_PROXY_TARGET=http://backend:8000
     depends_on:
       - backend
     networks:
@@ -16,7 +18,7 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: ./frontend/api
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
@@ -26,12 +28,7 @@ services:
       - API_PORT=8000
     networks:
       - ff-network
-    volumes:
-      - ./backend:/app
 
 networks:
   ff-network:
     driver: bridge
-
-volumes:
-  backend_data:

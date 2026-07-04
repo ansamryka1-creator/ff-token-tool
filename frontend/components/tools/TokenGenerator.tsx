@@ -8,49 +8,74 @@ import { Input } from '@/components/ui/Input'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { Copy, Check } from 'lucide-react'
 import { toast } from 'sonner'
+import { api, getApiErrorMessage } from '@/lib/api'
 
-const platforms = [
-  { id: 'google', label: 'Google', color: 'from-red-500 to-yellow-500' },
-  { id: 'facebook', label: 'Facebook', color: 'from-blue-600 to-blue-800' },
-  { id: 'vk', label: 'VK', color: 'from-blue-500 to-indigo-600' },
-  { id: 'huawei', label: 'Huawei', color: 'from-red-600 to-orange-500' },
-  { id: 'apple', label: 'Apple', color: 'from-gray-400 to-black' },
-  { id: 'twitter', label: 'Twitter', color: 'from-blue-400 to-blue-600' },
+type Mode = 'jwt' | 'eat' | 'guest'
+
+const modes: { id: Mode; label: string; description: string }[] = [
+  { id: 'jwt', label: 'Access → JWT', description: 'Extract a JWT from a Free Fire Access Token' },
+  { id: 'eat', label: 'EAT → Access', description: 'Convert an EAT token (or login URL) to an Access Token' },
+  { id: 'guest', label: 'Guest → Access', description: 'Get an Access Token from a guest account (UID + password)' },
 ]
 
-interface TokenResult {
-  accessToken: string
-  jwt: string
-  uid: string
-  expiration: string
+interface ResultField {
+  label: string
+  value: string
 }
 
 export function TokenGenerator() {
-  const [selectedPlatform, setSelectedPlatform] = useState<string>('google')
-  const [url, setUrl] = useState('')
+  const [mode, setMode] = useState<Mode>('jwt')
+  const [accessToken, setAccessToken] = useState('')
+  const [eatToken, setEatToken] = useState('')
+  const [uid, setUid] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<TokenResult | null>(null)
+  const [results, setResults] = useState<ResultField[] | null>(null)
   const [copiedField, setCopiedField] = useState<string | null>(null)
 
-  const handleGenerate = async () => {
-    if (!url.trim()) {
-      toast.error('Please enter a valid URL')
-      return
-    }
+  const resetInputs = () => {
+    setResults(null)
+  }
 
+  const handleGenerate = async () => {
     setLoading(true)
+    setResults(null)
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      setResult({
-        accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',
-        jwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ',
-        uid: 'FF_1234567890',
-        expiration: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      })
-      toast.success('Token generated successfully!')
+      if (mode === 'jwt') {
+        if (!accessToken.trim()) {
+          toast.error('Please enter an Access Token')
+          return
+        }
+        const { data } = await api.token.extractJwt(accessToken.trim())
+        setResults([
+          { label: 'JWT', value: data.jwt },
+          { label: 'Access Token', value: data.accessToken },
+          { label: 'Expiration', value: new Date(data.expiration).toLocaleString() },
+        ])
+      } else if (mode === 'eat') {
+        if (!eatToken.trim()) {
+          toast.error('Please enter an EAT token or URL')
+          return
+        }
+        const { data } = await api.token.eatToAccess(eatToken.trim())
+        setResults([
+          { label: 'Access Token', value: data.access_token },
+          { label: 'Account Name', value: data.account_name },
+        ])
+      } else {
+        if (!uid.trim() || !password.trim()) {
+          toast.error('Please enter both UID and password')
+          return
+        }
+        const { data } = await api.token.guestToken(uid.trim(), password.trim())
+        setResults([
+          { label: 'Access Token', value: data.access_token },
+          { label: 'Open ID', value: data.open_id },
+        ])
+      }
+      toast.success('Done!')
     } catch (error) {
-      toast.error('Failed to generate token. Please try again.')
+      toast.error(getApiErrorMessage(error))
     } finally {
       setLoading(false)
     }
@@ -63,12 +88,7 @@ export function TokenGenerator() {
     setTimeout(() => setCopiedField(null), 2000)
   }
 
-  const handleCopyAll = () => {
-    if (!result) return
-    const allText = `Access Token: ${result.accessToken}\n\nJWT: ${result.jwt}\n\nUID: ${result.uid}\n\nExpiration: ${result.expiration}`
-    navigator.clipboard.writeText(allText)
-    toast.success('All tokens copied to clipboard!')
-  }
+  const activeMode = modes.find(m => m.id === mode)!
 
   return (
     <motion.div
@@ -77,43 +97,83 @@ export function TokenGenerator() {
       className="space-y-8"
     >
       <div className="text-center mb-12">
-        <h1 className="text-4xl sm:text-5xl font-bold mb-4">JWT/EAT Token Generator</h1>
-        <p className="text-gray-400 text-lg">Generate access tokens from multiple platforms</p>
+        <h1 className="text-4xl sm:text-5xl font-bold mb-4">JWT / EAT Token Generator</h1>
+        <p className="text-gray-400 text-lg">Generate and convert Free Fire tokens</p>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8">
         <Card className="p-8">
           <h2 className="text-2xl font-bold mb-6">Configuration</h2>
-          
+
           <div className="mb-6">
-            <label className="block text-sm font-semibold mb-3 text-accent-purple">Select Platform</label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {platforms.map(platform => (
+            <label className="block text-sm font-semibold mb-3 text-accent-purple">Mode</label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {modes.map(m => (
                 <button
-                  key={platform.id}
-                  onClick={() => setSelectedPlatform(platform.id)}
-                  className={`p-3 rounded-lg border-2 transition-all ${
-                    selectedPlatform === platform.id
+                  key={m.id}
+                  onClick={() => {
+                    setMode(m.id)
+                    resetInputs()
+                  }}
+                  className={`p-3 rounded-lg border-2 transition-all text-sm font-semibold ${
+                    mode === m.id
                       ? 'border-accent-purple bg-accent-purple/20'
                       : 'border-card-border hover:border-accent-purple/50'
                   }`}
                 >
-                  <span className="text-sm font-semibold">{platform.label}</span>
+                  {m.label}
                 </button>
               ))}
             </div>
+            <p className="text-xs text-gray-500 mt-3">{activeMode.description}</p>
           </div>
 
-          <div className="mb-6">
-            <label className="block text-sm font-semibold mb-3 text-accent-blue">Account URL</label>
-            <Input
-              type="url"
-              placeholder="https://example.com/account"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleGenerate()}
-            />
-          </div>
+          {mode === 'jwt' && (
+            <div className="mb-6">
+              <label className="block text-sm font-semibold mb-3 text-accent-blue">Access Token</label>
+              <textarea
+                placeholder="Paste your Free Fire Access Token"
+                value={accessToken}
+                onChange={(e) => setAccessToken(e.target.value)}
+                className="w-full h-32 p-4 rounded-lg bg-card-bg border border-card-border text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-purple resize-none font-mono text-sm"
+              />
+            </div>
+          )}
+
+          {mode === 'eat' && (
+            <div className="mb-6">
+              <label className="block text-sm font-semibold mb-3 text-accent-blue">EAT Token or URL</label>
+              <textarea
+                placeholder="Paste your EAT token or login URL"
+                value={eatToken}
+                onChange={(e) => setEatToken(e.target.value)}
+                className="w-full h-32 p-4 rounded-lg bg-card-bg border border-card-border text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-purple resize-none font-mono text-sm"
+              />
+            </div>
+          )}
+
+          {mode === 'guest' && (
+            <div className="mb-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold mb-3 text-accent-blue">UID</label>
+                <Input
+                  type="text"
+                  placeholder="Account UID"
+                  value={uid}
+                  onChange={(e) => setUid(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-3 text-accent-blue">Password</label>
+                <Input
+                  type="password"
+                  placeholder="Account password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
 
           <Button
             onClick={handleGenerate}
@@ -124,10 +184,10 @@ export function TokenGenerator() {
             {loading ? (
               <>
                 <span className="inline-block w-4 h-4 mr-2 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                Generating...
+                Processing...
               </>
             ) : (
-              'Generate Token'
+              'Generate'
             )}
           </Button>
         </Card>
@@ -135,84 +195,31 @@ export function TokenGenerator() {
         <div className="space-y-4">
           {loading ? (
             <Card className="p-12 flex items-center justify-center min-h-96">
-              <LoadingSpinner message="Generating tokens..." />
+              <LoadingSpinner message="Contacting Free Fire servers..." />
             </Card>
-          ) : result ? (
-            <>
-              <Button
-                onClick={handleCopyAll}
-                variant="secondary"
-                className="w-full gap-2"
-                size="md"
-              >
-                <Copy size={18} />
-                Copy All
-              </Button>
-
-              <Card className="p-6">
+          ) : results ? (
+            results.map(field => (
+              <Card key={field.label} className="p-6">
                 <div className="space-y-1 mb-3">
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">Access Token</p>
-                  <p className="text-sm font-mono break-all text-accent-purple">{result.accessToken}</p>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">{field.label}</p>
+                  <p className="text-sm font-mono break-all text-accent-purple">{field.value}</p>
                 </div>
                 <button
-                  onClick={() => handleCopy(result.accessToken, 'accessToken')}
+                  onClick={() => handleCopy(field.value, field.label)}
                   className="flex items-center gap-2 text-xs text-gray-400 hover:text-white transition-colors"
                 >
-                  {copiedField === 'accessToken' ? (
+                  {copiedField === field.label ? (
                     <><Check size={14} /> Copied</>
                   ) : (
                     <><Copy size={14} /> Copy</>
                   )}
                 </button>
               </Card>
-
-              <Card className="p-6">
-                <div className="space-y-1 mb-3">
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">JWT</p>
-                  <p className="text-sm font-mono break-all text-accent-blue">{result.jwt}</p>
-                </div>
-                <button
-                  onClick={() => handleCopy(result.jwt, 'jwt')}
-                  className="flex items-center gap-2 text-xs text-gray-400 hover:text-white transition-colors"
-                >
-                  {copiedField === 'jwt' ? (
-                    <><Check size={14} /> Copied</>
-                  ) : (
-                    <><Copy size={14} /> Copy</>
-                  )}
-                </button>
-              </Card>
-
-              <Card className="p-6">
-                <div className="space-y-1 mb-3">
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">UID</p>
-                  <p className="text-sm font-mono break-all text-accent-cyan">{result.uid}</p>
-                </div>
-                <button
-                  onClick={() => handleCopy(result.uid, 'uid')}
-                  className="flex items-center gap-2 text-xs text-gray-400 hover:text-white transition-colors"
-                >
-                  {copiedField === 'uid' ? (
-                    <><Check size={14} /> Copied</>
-                  ) : (
-                    <><Copy size={14} /> Copy</>
-                  )}
-                </button>
-              </Card>
-
-              <Card className="p-6 border-orange-500/30">
-                <div className="space-y-1 mb-3">
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">Expiration</p>
-                  <p className="text-sm font-mono break-all text-orange-400">
-                    {new Date(result.expiration).toLocaleString()}
-                  </p>
-                </div>
-              </Card>
-            </>
+            ))
           ) : (
             <Card className="p-12 flex items-center justify-center min-h-96 border-dashed">
               <div className="text-center text-gray-500">
-                <p>Generate a token to see results here</p>
+                <p>Results will appear here</p>
               </div>
             </Card>
           )}
