@@ -26,7 +26,7 @@ const features = [
     description: 'Access thousands of pre-made bios ready to use',
   },
   {
-    icon: Zag,
+    icon: Zap,
     title: 'Easy Editor',
     description: 'Powerful bio editor with real-time preview',
   },
