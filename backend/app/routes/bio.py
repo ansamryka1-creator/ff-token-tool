@@ -1,63 +1,42 @@
-from fastapi import APIRouter, HTTPException, status
-from app.models import BioRequest, BioResponse
-import logging
+from fastapi import APIRouter
+from app.models import BioResponse
 
-logger = logging.getLogger(__name__)
 router = APIRouter()
 
 BIO_LIBRARY = [
-    {"id": 1, "text": "★ 𝐊𝐢𝐥𝐥𝐞𝐫 ★ | FF Player | 💀", "category": "Gaming"},
+    {"id": 1, "text": "★ FALLEN ★ | FF Player | 💀", "category": "Gaming"},
     {"id": 2, "text": "🎮 Pro Gamer 🎮 | Always Online | 🔥", "category": "Gaming"},
-    {"id": 3, "text": "✨ Aesthetic Bio ✨ | Dreamer | 💫", "category": "Aesthetic"},
+    {"id": 3, "text": "✨ Aesthetic Bio ✨ | Dreamer | 💭", "category": "Aesthetic"},
     {"id": 4, "text": "👑 King of FF 👑 | Never Surrender | 🏆", "category": "Gaming"},
     {"id": 5, "text": "🌙 Night Owl 🌙 | Chill Vibes | ✨", "category": "Chill"},
     {"id": 6, "text": "⚡ Lightning Fast ⚡ | Speed Demon | 🚀", "category": "Gaming"},
+    {"id": 7, "text": "🎭 Creative Soul 🎭 | Artist | 🎨", "category": "Creative"},
+    {"id": 8, "text": "💎 Diamond Player 💎 | Legendary | 👑", "category": "Gaming"},
+    {"id": 9, "text": "🌸 Flower Power 🌸 | Nature Lover | 🌺", "category": "Aesthetic"},
+    {"id": 10, "text": "🔥 Fire Keeper 🔥 | Hot Shots | 💥", "category": "Gaming"},
+    {"id": 11, "text": "🎵 Music Lover 🎵 | Vibe Check | 🎶", "category": "Creative"},
+    {"id": 12, "text": "🌊 Ocean Breeze 🌊 | Chill Mode | 🏖️", "category": "Aesthetic"},
 ]
 
-@router.post("/longbio")
-async def process_bio(request: BioRequest):
-    """
-    Process bio content
-    
-    - **content**: Bio text content (max 1000 characters)
-    """
-    try:
-        if not request.content.strip():
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Bio content cannot be empty"
-            )
-        
-        logger.info(f"Bio processed: {len(request.content)} characters")
-        
-        return {
-            "success": True,
-            "message": "Bio processed successfully",
-            "content": request.content,
-            "length": len(request.content)
-        }
-    
-    except Exception as e:
-        logger.error(f"Error processing bio: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to process bio"
-        )
-
-@router.get("/bios", response_model=list[BioResponse])
+@router.get("/library", response_model=list[BioResponse], tags=["Bio"])
 async def get_bio_library():
     """
-    Get bio library
+    الحصول على مكتبة البايو (النماذج الجاهزة)
     
-    Returns a list of pre-made bio templates
+    تعيد قائمة بالبايوهات المقترحة من فئات مختلفة
     """
-    try:
-        logger.info("Bio library retrieved")
-        return BIO_LIBRARY
+    return BIO_LIBRARY
+
+@router.get("/library/{category}", response_model=list[BioResponse], tags=["Bio"])
+async def get_bio_by_category(category: str):
+    """
+    الحصول على البايوهات حسب الفئة
     
-    except Exception as e:
-        logger.error(f"Error retrieving bio library: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve bio library"
-        )
+    الفئات المتاحة:
+    - Gaming
+    - Aesthetic
+    - Chill
+    - Creative
+    """
+    filtered = [bio for bio in BIO_LIBRARY if bio.get("category", "").lower() == category.lower()]
+    return filtered if filtered else BIO_LIBRARY
