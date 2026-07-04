@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.models import BioResponse
+from _core.models import BioResponse
 
 router = APIRouter()
 

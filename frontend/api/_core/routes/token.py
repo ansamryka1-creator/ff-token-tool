@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 from datetime import datetime, timedelta
-from app.services.handler import TokenGenerator
+from _core.services.handler import TokenGenerator
 import logging
 
 logger = logging.getLogger(__name__)

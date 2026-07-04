@@ -4,8 +4,10 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Copy, Trash2, Bold, Italic, Underline } from 'lucide-react'
+import { Input } from '@/components/ui/Input'
+import { Copy, Trash2, Bold, Italic, Underline, Send } from 'lucide-react'
 import { toast } from 'sonner'
+import { api, getApiErrorMessage } from '@/lib/api'
 
 export function BioEditor() {
   const [content, setContent] = useState('')
@@ -13,6 +15,8 @@ export function BioEditor() {
   const [isItalic, setIsItalic] = useState(false)
   const [isUnderline, setIsUnderline] = useState(false)
   const [selectedColor, setSelectedColor] = useState('#a855f7')
+  const [jwtToken, setJwtToken] = useState('')
+  const [updating, setUpdating] = useState(false)
 
   const colors = [
     '#a855f7',
@@ -42,6 +46,30 @@ export function BioEditor() {
     setIsItalic(false)
     setIsUnderline(false)
     toast.success('Bio cleared')
+  }
+
+  const handleApplyToAccount = async () => {
+    if (!jwtToken.trim()) {
+      toast.error('Please enter your JWT token')
+      return
+    }
+    if (!content.trim()) {
+      toast.error('Bio is empty')
+      return
+    }
+    setUpdating(true)
+    try {
+      const { data } = await api.bio.update(jwtToken.trim(), content)
+      if (data.success) {
+        toast.success(data.message || 'Bio updated on your account!')
+      } else {
+        toast.error(data.message || 'Failed to update bio')
+      }
+    } catch (error) {
+      toast.error(getApiErrorMessage(error))
+    } finally {
+      setUpdating(false)
+    }
   }
 
   const maxChars = 100
@@ -171,7 +199,7 @@ export function BioEditor() {
             </div>
           </Card>
 
-          <div className="space-y-3 text-sm text-gray-400">
+          <div className="space-y-3 text-sm text-gray-400 mb-6">
             <div>
               <p className="font-semibold text-white mb-2">Applied Formatting:</p>
               <div className="flex flex-wrap gap-2">
@@ -181,6 +209,37 @@ export function BioEditor() {
                 {!isBold && !isItalic && !isUnderline && <span className="px-2 py-1 bg-card-bg rounded text-gray-600">No formatting</span>}
               </div>
             </div>
+          </div>
+
+          <div className="pt-6 border-t border-card-border">
+            <p className="font-semibold text-white mb-2">Apply to your account (optional)</p>
+            <p className="text-xs text-gray-500 mb-3">
+              Paste your Free Fire JWT token to push this bio directly to your account.
+            </p>
+            <Input
+              type="password"
+              placeholder="JWT token"
+              value={jwtToken}
+              onChange={(e) => setJwtToken(e.target.value)}
+              className="mb-3 font-mono text-sm"
+            />
+            <Button
+              onClick={handleApplyToAccount}
+              disabled={updating || !content.trim()}
+              className="w-full gap-2"
+            >
+              {updating ? (
+                <>
+                  <span className="inline-block w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Send size={18} />
+                  Update Bio on Account
+                </>
+              )}
+            </Button>
           </div>
         </Card>
       </div>

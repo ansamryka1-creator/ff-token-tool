@@ -1,0 +1,14 @@
+# API (FastAPI) Dockerfile — used for local/VPS/Docker deployments.
+# On Vercel the same app is served via the serverless entrypoint (index.py).
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+EXPOSE 8000
+
+CMD ["uvicorn", "index:app", "--host", "0.0.0.0", "--port", "8000"]
