@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { Card } from '@/components/ui/Card'
-import { Zap, Zag, BookOpen, Shield, Smartphone, Rocket } from 'lucide-react'
+import { Zap, BookOpen, Shield, Smartphone, Rocket } from 'lucide-react'
 
 const features = [
   {
@@ -70,7 +70,9 @@ export function Features() {
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
             <span className="gradient-text">Why Choose Us?</span>
           </h2>
-          <p className="text-gray-400 max-w-2xl mx-auto text-lg">Everything you need for Free Fire in one platform</p>
+          <p className="text-gray-400 max-w-2xl mx-auto text-lg">
+            Everything you need for Free Fire in one platform
+          </p>
         </motion.div>
 
         <motion.div
@@ -82,12 +84,14 @@ export function Features() {
         >
           {features.map((feature, index) => {
             const Icon = feature.icon
+
             return (
               <motion.div key={index} variants={itemVariants}>
                 <Card className="h-full p-6 sm:p-8 hover:border-accent-purple/50 transition-all group">
                   <div className="mb-4 p-3 w-fit rounded-lg bg-card-bg group-hover:bg-accent-purple/10 transition-all">
                     <Icon className="w-6 h-6 text-accent-purple" />
                   </div>
+
                   <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
                   <p className="text-gray-400">{feature.description}</p>
                 </Card>
