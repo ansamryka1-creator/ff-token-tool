@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { Copy, CopyAll, Check } from 'lucide-react'
+import { Copy, Check } from 'lucide-react'
 import { toast } from 'sonner'
 
 const platforms = [
@@ -145,7 +145,7 @@ export function TokenGenerator() {
                 className="w-full gap-2"
                 size="md"
               >
-                <CopyAll size={18} />
+                <Copy size={18} />
                 Copy All
               </Button>
 
